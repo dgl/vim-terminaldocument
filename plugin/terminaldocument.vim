@@ -6,13 +6,13 @@ autocmd BufEnter,BufFilePost * call s:update_document(0)
 " these events might change the nature of the file,
 " so we try to refresh its icon
 autocmd BufWritePost,FileChangedShellPost,ShellCmdPost * call s:update_document(1)
-autocmd VimLeave * call s:set_osc6('')
+autocmd VimLeave * call s:set_osc('')
 
 function! s:update_document(refresh)
   let path = expand('%:p')
   if empty(path) || !filereadable(path)
     " unnamed/unsaved file being edited
-    call s:set_osc6('')
+    call s:set_osc('')
   else
     let path = s:urlencode(path)
     if a:refresh
@@ -21,14 +21,18 @@ function! s:update_document(refresh)
       " reference to the same file
       " (better than the flickering that happens when we temporarily set
       " to empty)
-      call s:set_osc6('file://' . path)
+      call s:set_osc('file://localhost' . path)
     endif
-    call s:set_osc6('file://' . hostname() . path)
+    call s:set_osc('file://' . hostname() . path)
   endif
 endfunction
 
-function! s:set_osc6(pt)
-  call system('printf "\e]6;%s\a" >/dev/tty ' . shellescape(a:pt))
+function! s:set_osc(pt)
+  let osc = '6'
+  if &term == 'xterm-ghostty'
+    let osc = '7'
+  endif
+  call system('printf "\e]' . osc . ';%s\a" >/dev/tty ' . shellescape(a:pt))
 endfunction
 
 
